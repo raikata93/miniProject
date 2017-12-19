@@ -112,6 +112,7 @@ class RestApiController extends Controller
     	if ($filterId>4 || $filterId<1) {
 	        return response()->json(array('error'=>1,'result'=>["Unknown filter id"]));    
     	}
+    	$result = '';
     	switch ($filterId) {
     		case 1: //ime na parcel
     		$result =  \DB::table('work_plots')
@@ -137,7 +138,7 @@ class RestApiController extends Controller
 		           ->get();
     			break;
     	}
-    		dd($result);
-        return response()->json(array('error'=>0,'result'=>[$result]));    
+
+        return response()->json(array('error'=>0,'result'=>[json_encode($result)]));    
     }
 }
