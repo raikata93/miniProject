@@ -109,21 +109,35 @@ class RestApiController extends Controller
     	if(is_null($authUser)){
 	        return response()->json(array('error'=>1,'result'=>["Unknown token"]));    
     	}
-
+    	if ($filterId>4 || $filterId<1) {
+	        return response()->json(array('error'=>1,'result'=>["Unknown filter id"]));    
+    	}
     	switch ($filterId) {
     		case 1: //ime na parcel
+    		$result =  \DB::table('work_plots')
+		           ->join('plots', 'work_plots.plot_id', '=', 'plots.id')
+		           ->select('plots.name')
+		           ->get();
     			break;
     		case 2:// kultura
-    			# code...
+    			$result =  \DB::table('work_plots')
+		           ->join('plots', 'work_plots.plot_id', '=', 'plots.id')
+		           ->select('plots.culture')
+		           ->get();
     			break;
     		case 3: // data na obrabotvane
-   				# code...
+   				$result =  \DB::table('work_plots')
+		           ->select('work_plots.date')
+		           ->get();
     			break;
     		case 4: // ime na traktor
-    			# code...
+    			$result =  \DB::table('work_plots')
+		           ->join('traktors', 'work_plots.traktor_id', '=', 'traktors.id')
+		           ->select('traktors.name')
+		           ->get();
     			break;
     	}
-
+    		dd($result);
         return response()->json(array('error'=>0,'result'=>[$result]));    
     }
 }
