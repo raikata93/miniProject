@@ -18,4 +18,16 @@ class WorkPlot extends Model
     public function plot(){
     	return $this->belongsTo('App\Plot', 'plot_id');
     }
+
+    public static function validateData($traktor, $plot, $date, $area, $plotArea){
+    	if (is_null($traktor) || is_null($plot) || is_null($date) || is_null($area)) {
+    		return false;
+    	}else{
+    		if ($area > $plotArea) {
+    			return false;
+    		}
+    		
+    		return true;
+    	}
+    }
 }

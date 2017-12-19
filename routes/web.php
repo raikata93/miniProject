@@ -17,6 +17,6 @@ Route::get('/', function () {
 
 Route::post('/traktor/store', 'RestApiController@traktorStore');
 Route::post('/plot/store', 'RestApiController@plotStore');
-Route::post('/work/plot/{plotId}/traktor/{traktoId}/store', 'RestApiController@workPlotStore');
+Route::post('/work/plot/store', 'RestApiController@workPlotStore');
 Route::post('/work/plots', 'RestApiController@allWorkPlots');
-Route::post('/filter/{filterId}', 'RestApiController@filterTable');
+Route::post('/filter', 'RestApiController@filterTable');

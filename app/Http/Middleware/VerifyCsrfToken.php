@@ -14,8 +14,7 @@ class VerifyCsrfToken extends BaseVerifier
     protected $except = [
         '/traktor/store',
         '/plot/store',
-        '/work/plot/stor',
-        '/work/plot/*/traktor/*/store',
+        '/work/plot/store',
         '/work/plots',
         '/filter/*'
     ];

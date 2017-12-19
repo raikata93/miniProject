@@ -12,71 +12,56 @@ use App\WorkPlot;
 class RestApiController extends Controller
 {
     public function traktorStore(Request $request){
-    	$authUser = User::where('api_token', $request->header('token'))->first();
+        $authUser = User::where('api_token', $request->header('token'))->first();
     	if(is_null($authUser)){
-	        return response()->json(array('error'=>1,'result'=>["Unknown token"]));    
+	        return response()->json(array('error'=>1,'result'=>["user_not_found"]));    
     	}
-    	
-    	$requestData = json_decode($request->header('data'));
-    	if(!isset($requestData->name) || $requestData->name == ""){
-	        return response()->json(array('error'=>1,'result'=>["Empty traktor name"]));    
-    	} else {
-    		Traktor::create(['name' => $requestData->name]);
-	        return response()->json(array('error'=>0,'result'=>["Sucessfull Added Traktor"]));    
-    	}
+
+        $respData = array('error'=>1,'result'=>["unknown_data"]);
+        if (Traktor::validateData($request->name)) {
+            Traktor::create(['name' => $request->name]);
+            $respData = array('error'=>0,'result'=>["sucessfull"]);
+        }
+        return response()->json($respData);
     }
 
     public function plotStore(Request $request){
     	$authUser = User::where('api_token', $request->header('token'))->first();
     	if(is_null($authUser)){
-	        return response()->json(array('error'=>1,'result'=>["Unknown token"]));    
+	        return response()->json(array('error'=>1,'result'=>["user_not_found"]));    
     	}
     	
-    	$requestData = json_decode($request->header('data'));
-    	if(!isset($requestData->area) || $requestData->area == ""){
-	        return response()->json(array('error'=>1,'result'=>["Invalid data for area"]));    
-    	}
-
-    	if(!isset($requestData->name) || $requestData->name == "" || !isset($requestData->culture) || $requestData->culture == ""){
-	        return response()->json(array('error'=>1,'result'=>["All inputs are required"]));    
-    	} else  {
-    		Plot::create(['name' => $requestData->name, 'culture' => $requestData->culture, 'area' => $requestData->area]);
-	        return response()->json(array('error'=>0,'result'=>["Sucessfull Added Plot"]));    
-    	}
+        $respData = array('error'=>1,'result'=>["unknown_data"]);
+        if (Plot::validateData($request->name, $request->culture, $request->area)) {
+            Plot::create(['name' => $request->name, 'culture' => $request->culture, 'area' => $request->area]);
+            $respData = array('error'=>0,'result'=>["sucessfull"]);
+        }
+        return response()->json($respData);
     }
 
-    public function workPlotStore(Request $request, $plotId, $traktorId){
+    public function workPlotStore(Request $request){
     	$authUser = User::where('api_token', $request->header('token'))->first();
     	if(is_null($authUser)){
-	        return response()->json(array('error'=>1,'result'=>["Unknown token"]));    
+	        return response()->json(array('error'=>1,'result'=>["user_not_found"]));    
     	}
 
-    	$plot = Plot::find($plotId);
+    	$plot = Plot::find($request->plot_id);
     	if (is_null($plot)) {
-	        return response()->json(array('error'=>1,'result'=>["Unknown plot"]));    
+	        return response()->json(array('error'=>1,'result'=>["unknown_data"]));    
     	}
 
-		$traktor = Traktor::find($traktorId);
+		$traktor = Traktor::find($request->traktor_id);
     	if (is_null($traktor)) {
-	        return response()->json(array('error'=>1,'result'=>["Unknown traktor"]));    
+	        return response()->json(array('error'=>1,'result'=>["unknown_data"]));    
     	}
 
-    	$requestData = json_decode($request->header('data'));
-    	if (!isset($requestData->date) || !isset($requestData->area)){
-	        return response()->json(array('error'=>1,'result'=>["All inputs are required"]));    
-    	}
-		
-		if (is_null($requestData->date) || is_null($requestData->area)){
-	        return response()->json(array('error'=>1,'result'=>["All inputs are required"]));    
-    	}    	
-
-    	if($requestData->area > $plot->area){
-	        return response()->json(array('error'=>1,'result'=>["Plot area which you choose is smaller than the need work area"]));    
-    	}
-
-    	WorkPlot::create(['date'=> $requestData->date, 'area'=> $requestData->area, 'traktor_id'=> $traktorId, 'plot_id' => $plotId]);
-
-        return response()->json(array('error'=>0,'result'=>["Sucessfull Added WorkPlot"]));    
+        $respData = array('error'=>1,'result'=>["unknown_data"]);
+        if (WorkPlot::validateData($request->traktor_id, $request->plot_id, $request->date, $request->area,$plot->area)) {
+            
+            WorkPlot::create(['date'=> $request->date, 'area'=> $request->area, 'traktor_id'=> $request->traktor_id, 'plot_id' => $request->plot_id]);
+            $respData = array('error'=>0,'result'=>["sucessfull"]);
+        }
+        return response()->json($respData);	
     }
 
     public function allWorkPlots(Request $request){
@@ -104,46 +89,45 @@ class RestApiController extends Controller
         return response()->json(array('error'=>0,'result'=>[$array]));    
     }
 
-    public function filterTable(Request $request,$filterId){
+    public function filterTable(Request $request){
     	$authUser = User::where('api_token', $request->header('token'))->first();
     	if(is_null($authUser)){
-	        return response()->json(array('error'=>1,'result'=>["Unknown token"]));    
+	        return response()->json(array('error'=>1,'result'=>["user_not_found"]));    
     	}
-    	if ($filterId>4 || $filterId<1) {
-	        return response()->json(array('error'=>1,'result'=>["Unknown filter id"]));    
-    	}
-    	$result = '';
-    	switch ($filterId) {
-    		case 1: //ime na parcel
-    		$result =  \DB::table('work_plots')
-		           ->join('plots', 'work_plots.plot_id', '=', 'plots.id')
-		           ->select('plots.name')
-		           ->get();
-    			break;
-    		case 2:// kultura
-    			$result =  \DB::table('work_plots')
-		           ->join('plots', 'work_plots.plot_id', '=', 'plots.id')
-		           ->select('plots.culture')
-		           ->get();
-    			break;
-    		case 3: // data na obrabotvane
-   				$array = [];
-   				$result =  \DB::table('work_plots')
-		           ->select('work_plots.date')
-		           ->get();
-		           foreach ($result as $date) {
-		           		$formatedDate = date('d.m.Y', $date->date);
-		           		array_push($array, $formatedDate);
-		           }
-		           $result = $array;
-    			break;
-    		case 4: // ime na traktor
-    			$result =  \DB::table('work_plots')
-		           ->join('traktors', 'work_plots.traktor_id', '=', 'traktors.id')
-		           ->select('traktors.name')
-		           ->get();
-    			break;
-    	}
+    	
+
+    	// $result = '';
+    	// switch ($filterId) {
+    	// 	case 1: //ime na parcel
+    	// 	$result =  \DB::table('work_plots')
+		   //         ->join('plots', 'work_plots.plot_id', '=', 'plots.id')
+		   //         ->select('plots.name')
+		   //         ->get();
+    	// 		break;
+    	// 	case 2:// kultura
+    	// 		$result =  \DB::table('work_plots')
+		   //         ->join('plots', 'work_plots.plot_id', '=', 'plots.id')
+		   //         ->select('plots.culture')
+		   //         ->get();
+    	// 		break;
+    	// 	case 3: // data na obrabotvane
+   		// 		$array = [];
+   		// 		$result =  \DB::table('work_plots')
+		   //         ->select('work_plots.date')
+		   //         ->get();
+		   //         foreach ($result as $date) {
+		   //         		$formatedDate = date('d.m.Y', $date->date);
+		   //         		array_push($array, $formatedDate);
+		   //         }
+		   //         $result = $array;
+    	// 		break;
+    	// 	case 4: // ime na traktor
+    	// 		$result =  \DB::table('work_plots')
+		   //         ->join('traktors', 'work_plots.traktor_id', '=', 'traktors.id')
+		   //         ->select('traktors.name')
+		   //         ->get();
+    	// 		break;
+    	// }
 
         return response()->json(array('error'=>0,'result'=>[json_encode($result)]));    
     }

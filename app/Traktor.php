@@ -15,4 +15,12 @@ class Traktor extends Model
     public function workPlots(){
     	return $this->hasMany('App\WorkPlot');
     }
+
+    public static function validateData($traktor){
+    	if (is_null($traktor)) {
+    		return false;
+    	}else{
+    		return true;
+    	}
+    }
 }
