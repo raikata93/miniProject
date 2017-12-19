@@ -94,7 +94,7 @@ class RestApiController extends Controller
     		$row = [
     			'plot_name' => $workPlot->plot->name,
     			'culture' => $workPlot->plot->culture,
-    			'date' => date('d/m/y',$workPlot->date),
+    			'date' => date('d.m.Y',$workPlot->date),
     			'traktor_name' => $workPlot->traktor->name,
     			'area' => $workPlot->plot->area
     		];
@@ -127,9 +127,15 @@ class RestApiController extends Controller
 		           ->get();
     			break;
     		case 3: // data na obrabotvane
+   				$array = [];
    				$result =  \DB::table('work_plots')
 		           ->select('work_plots.date')
 		           ->get();
+		           foreach ($result as $date) {
+		           		$formatedDate = date('d.m.Y', $date->date);
+		           		array_push($array, $formatedDate);
+		           }
+		           $result = $array;
     			break;
     		case 4: // ime na traktor
     			$result =  \DB::table('work_plots')
