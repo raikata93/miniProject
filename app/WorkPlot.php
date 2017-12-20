@@ -30,4 +30,19 @@ class WorkPlot extends Model
     		return true;
     	}
     }
+
+    public static function getAllWorkPlotsArray($workPlots){
+        $array = [];
+        foreach ($workPlots as $workPlot) {
+            $row = [
+                'plot_name' => $workPlot->plot->name,
+                'culture' => $workPlot->plot->culture,
+                'date' => date('d.m.Y',$workPlot->date),
+                'traktor_name' => $workPlot->traktor->name,
+                'area' => $workPlot->plot->area
+            ];
+            array_push($array, $row);
+        }
+        return $array;
+    }
 }

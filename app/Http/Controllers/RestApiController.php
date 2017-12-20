@@ -67,25 +67,15 @@ class RestApiController extends Controller
     public function allWorkPlots(Request $request){
     	$authUser = User::where('api_token', $request->header('token'))->first();
     	if(is_null($authUser)){
-	        return response()->json(array('error'=>1,'result'=>["Unknown token"]));    
+	        return response()->json(array('error'=>1,'result'=>["user_not_founds"]));    
     	}
 
     	$workPlots = WorkPlot::with('traktor','plot')->get();
     	if (is_null($workPlots)) {
 	        return response()->json(array('error'=>1,'result'=>["Error"]));    
     	}
-    	$array = [];
-    	foreach ($workPlots as $workPlot) {
-    		$row = [
-    			'plot_name' => $workPlot->plot->name,
-    			'culture' => $workPlot->plot->culture,
-    			'date' => date('d.m.Y',$workPlot->date),
-    			'traktor_name' => $workPlot->traktor->name,
-    			'area' => $workPlot->plot->area
-    		];
-    		array_push($array, $row);
-    	}
-        
+
+        $array = WorkPlot::getAllWorkPlotsArray($workPlots);
         return response()->json(array('error'=>0,'result'=>[$array]));    
     }
 
@@ -94,41 +84,19 @@ class RestApiController extends Controller
     	if(is_null($authUser)){
 	        return response()->json(array('error'=>1,'result'=>["user_not_found"]));    
     	}
-    	
 
-    	// $result = '';
-    	// switch ($filterId) {
-    	// 	case 1: //ime na parcel
-    	// 	$result =  \DB::table('work_plots')
-		   //         ->join('plots', 'work_plots.plot_id', '=', 'plots.id')
-		   //         ->select('plots.name')
-		   //         ->get();
-    	// 		break;
-    	// 	case 2:// kultura
-    	// 		$result =  \DB::table('work_plots')
-		   //         ->join('plots', 'work_plots.plot_id', '=', 'plots.id')
-		   //         ->select('plots.culture')
-		   //         ->get();
-    	// 		break;
-    	// 	case 3: // data na obrabotvane
-   		// 		$array = [];
-   		// 		$result =  \DB::table('work_plots')
-		   //         ->select('work_plots.date')
-		   //         ->get();
-		   //         foreach ($result as $date) {
-		   //         		$formatedDate = date('d.m.Y', $date->date);
-		   //         		array_push($array, $formatedDate);
-		   //         }
-		   //         $result = $array;
-    	// 		break;
-    	// 	case 4: // ime na traktor
-    	// 		$result =  \DB::table('work_plots')
-		   //         ->join('traktors', 'work_plots.traktor_id', '=', 'traktors.id')
-		   //         ->select('traktors.name')
-		   //         ->get();
-    	// 		break;
-    	// }
+    	$result = WorkPlot::with('plot', 'traktor')->where('date',$request->work_date)->where(function ($q) use($request){
+            $q->whereHas('plot', function($query) use ($request) {
+                $query->where('name','like','%'.$request->plot_name.'%')
+                      ->where('culture', 'like','%'.$request->culture.'%');
+            })
+            ->whereHas('traktor', function($qu) use ($request) {
+                    $qu->where('name', 'like', '%'.$request->traktor_name.'%');
+            });
+        })->get();
+        dd(json_encode($result));
 
-        return response()->json(array('error'=>0,'result'=>[json_encode($result)]));    
+
+        // return response()->json(array('error'=>0,'result'=>[json_encode($result)]));    
     }
 }

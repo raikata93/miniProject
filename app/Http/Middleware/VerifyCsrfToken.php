@@ -16,6 +16,6 @@ class VerifyCsrfToken extends BaseVerifier
         '/plot/store',
         '/work/plot/store',
         '/work/plots',
-        '/filter/*'
+        '/filter'
     ];
 }
