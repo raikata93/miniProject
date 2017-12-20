@@ -67,7 +67,7 @@ class RestApiController extends Controller
     public function allWorkPlots(Request $request){
     	$authUser = User::where('api_token', $request->header('token'))->first();
     	if(is_null($authUser)){
-	        return response()->json(array('error'=>1,'result'=>["user_not_founds"]));    
+	        return response()->json(array('error'=>1,'result'=>["user_not_found"]));    
     	}
 
     	$workPlots = WorkPlot::with('traktor','plot')->get();
@@ -85,18 +85,18 @@ class RestApiController extends Controller
 	        return response()->json(array('error'=>1,'result'=>["user_not_found"]));    
     	}
 
-    	$result = WorkPlot::with('plot', 'traktor')->where('date',$request->work_date)->where(function ($q) use($request){
-            $q->whereHas('plot', function($query) use ($request) {
-                $query->where('name','like','%'.$request->plot_name.'%')
-                      ->where('culture', 'like','%'.$request->culture.'%');
-            })
-            ->whereHas('traktor', function($qu) use ($request) {
-                    $qu->where('name', 'like', '%'.$request->traktor_name.'%');
-            });
+        $workPlots = WorkPlot::with('plot', 'traktor');
+        $result = $workPlots
+        ->where('date','=',$request->work_date)
+        ->whereHas('plot', function($query) use ($request) {
+            $query->where('name', 'like', '%'.$request->plot_name.'%')
+            ->where('culture', 'like', '%'.$request->culture.'%');
+        })
+        ->whereHas('traktor', function($query) use ($request){
+            $query->where('name', 'like', '%'.$request->traktor_name.'%');
         })->get();
-        dd(json_encode($result));
 
 
-        // return response()->json(array('error'=>0,'result'=>[json_encode($result)]));    
+        return response()->json(array('error'=>0,'result'=>[json_encode($result)]));    
     }
 }
